@@ -232,14 +232,41 @@ pub fn draw_time_tracking_view(
     // Total for the day
     let total_minutes: i32 = cache.current_date_entries.iter().map(|e| e.minutes).sum();
     ui.add_space(10.0);
+
+    // Check total against 8 hours (480 minutes)
+    let eight_hours = 480;
+
     ui.horizontal(|ui| {
         ui.label(RichText::new("Total:").strong());
+
+        let (color, show_warning) = if total_minutes < eight_hours {
+            (Color32::from_rgb(255, 0, 0), false) // Red - under 8 hours
+        } else if total_minutes == eight_hours {
+            (Color32::from_rgb(0, 150, 0), false) // Green - exactly 8 hours
+        } else {
+            (Color32::from_rgb(255, 140, 0), true) // Orange - over 8 hours with warning
+        };
+
         ui.label(
             RichText::new(format_minutes_to_time(total_minutes))
                 .size(18.0)
                 .strong()
-                .color(Color32::from_rgb(0, 150, 0)),
+                .color(color),
         );
+
+        // Show warning icon and message if over 8 hours
+        if show_warning {
+            ui.label(
+                RichText::new("⚠")
+                    .size(18.0)
+                    .color(Color32::from_rgb(255, 140, 0)),
+            );
+            ui.label(
+                RichText::new("Over 8 hours!")
+                    .color(Color32::from_rgb(255, 140, 0))
+                    .strong(),
+            );
+        }
     });
 }
 
@@ -349,14 +376,41 @@ pub fn draw_daily_summary_view(
         // Grand total
         ui.add_space(10.0);
         ui.separator();
+
+        // Check total against 8 hours (480 minutes)
+        let eight_hours = 480;
+
         ui.horizontal(|ui| {
             ui.label(RichText::new("TOTAL FOR DAY:").strong().size(16.0));
+
+            let (color, show_warning) = if total_day_minutes < eight_hours {
+                (Color32::from_rgb(255, 0, 0), false) // Red - under 8 hours
+            } else if total_day_minutes == eight_hours {
+                (Color32::from_rgb(0, 150, 0), false) // Green - exactly 8 hours
+            } else {
+                (Color32::from_rgb(255, 140, 0), true) // Orange - over 8 hours with warning
+            };
+
             ui.label(
                 RichText::new(format_minutes_to_time(total_day_minutes))
                     .strong()
                     .size(18.0)
-                    .color(Color32::from_rgb(0, 150, 0)),
+                    .color(color),
             );
+
+            // Show warning icon and message if over 8 hours
+            if show_warning {
+                ui.label(
+                    RichText::new("⚠")
+                        .size(18.0)
+                        .color(Color32::from_rgb(255, 140, 0)),
+                );
+                ui.label(
+                    RichText::new("Over 8 hours!")
+                        .color(Color32::from_rgb(255, 140, 0))
+                        .strong(),
+                );
+            }
         });
     });
 }
