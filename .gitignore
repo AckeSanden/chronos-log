@@ -58,3 +58,7 @@ criterion/
 # Environment files (if you add any configuration)
 .env
 .env.local
+
+# Windows deployment files
+chronos-log-windows/
+chronos-log-windows-*.zip
