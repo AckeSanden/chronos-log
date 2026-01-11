@@ -62,7 +62,7 @@ pub fn draw_time_tracking_view(
         ui.heading("Add Time Entry");
         ui.horizontal(|ui| {
             ui.label("Project/Activity:");
-            
+
             // Activity selector as combo box
             let activity_label = entry_form
                 .activity_type_id
@@ -89,7 +89,7 @@ pub fn draw_time_tracking_view(
                         if activities.is_empty() {
                             continue;
                         }
-                        
+
                         ui.label(RichText::new(&project.name).strong());
                         for activity in activities {
                             ui.selectable_value(
@@ -106,7 +106,7 @@ pub fn draw_time_tracking_view(
         ui.horizontal(|ui| {
             ui.label("Time (HH:MM):");
             ui.add(egui::TextEdit::singleline(&mut entry_form.time_str).desired_width(60.0));
-            
+
             // Quick time buttons
             if ui.button("+15m").clicked() {
                 add_time_to_form(entry_form, 15);
@@ -130,7 +130,10 @@ pub fn draw_time_tracking_view(
 
         ui.horizontal(|ui| {
             let can_add = entry_form.is_valid();
-            if ui.add_enabled(can_add, egui::Button::new("➕ Add Entry")).clicked() {
+            if ui
+                .add_enabled(can_add, egui::Button::new("➕ Add Entry"))
+                .clicked()
+            {
                 if let (Some(activity_id), Some(minutes)) =
                     (entry_form.activity_type_id, entry_form.get_minutes())
                 {
@@ -159,20 +162,18 @@ pub fn draw_time_tracking_view(
 
     // Today's entries
     ui.heading("Today's Entries");
-    
+
     if cache.current_date_entries.is_empty() {
         ui.label("No entries for this date yet.");
     } else {
         egui::ScrollArea::vertical()
             .max_height(300.0)
             .show(ui, |ui| {
-                let mut entry_to_delete: Option<i64> = None;
                 let mut entry_to_edit: Option<crate::database::TimeEntry> = None;
 
                 for entry in &cache.current_date_entries {
                     let activity = cache.get_activity_by_id(entry.activity_type_id);
-                    let project = activity
-                        .and_then(|a| cache.get_project_by_id(a.project_id));
+                    let project = activity.and_then(|a| cache.get_project_by_id(a.project_id));
 
                     ui.horizontal(|ui| {
                         // Time
@@ -196,7 +197,8 @@ pub fn draw_time_tracking_view(
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             if ui.small_button("🗑").clicked() {
-                                entry_to_delete = Some(entry.id);
+                                *dialog =
+                                    DialogState::ConfirmDelete(DeleteTarget::TimeEntry(entry.id));
                             }
                             if ui.small_button("✏").clicked() {
                                 entry_to_edit = Some(entry.clone());
@@ -204,14 +206,6 @@ pub fn draw_time_tracking_view(
                         });
                     });
                     ui.separator();
-                }
-
-                // Handle delete outside the borrow
-                if let Some(id) = entry_to_delete {
-                    if let Err(e) = db.delete_time_entry(id) {
-                        eprintln!("Error deleting entry: {}", e);
-                    }
-                    cache.mark_dirty();
                 }
 
                 // Handle edit
@@ -256,7 +250,9 @@ pub fn draw_daily_summary_view(
     ui.label("Total time per activity (for entering into time management system):");
     ui.add_space(10.0);
 
-    let summaries = db.get_daily_summary(date_state.selected_date).unwrap_or_default();
+    let summaries = db
+        .get_daily_summary(date_state.selected_date)
+        .unwrap_or_default();
 
     if summaries.is_empty() {
         ui.label("No entries for this date.");
@@ -282,11 +278,11 @@ pub fn draw_daily_summary_view(
 
                 for summary in activities {
                     total_day_minutes += summary.total_minutes;
-                    
+
                     ui.horizontal(|ui| {
                         // Activity name
                         ui.label(RichText::new(&summary.activity_name).strong());
-                        
+
                         // Total time
                         ui.label(
                             RichText::new(format_minutes_to_time(summary.total_minutes))
@@ -631,7 +627,10 @@ pub fn draw_dialog(
                         }
 
                         let can_save = project_form.is_valid();
-                        if ui.add_enabled(can_save, egui::Button::new("Create")).clicked() {
+                        if ui
+                            .add_enabled(can_save, egui::Button::new("Create"))
+                            .clicked()
+                        {
                             if let Err(e) = db.create_project(
                                 project_form.name.trim(),
                                 project_form.description.trim(),
@@ -670,7 +669,10 @@ pub fn draw_dialog(
                         }
 
                         let can_save = project_form.is_valid();
-                        if ui.add_enabled(can_save, egui::Button::new("Save")).clicked() {
+                        if ui
+                            .add_enabled(can_save, egui::Button::new("Save"))
+                            .clicked()
+                        {
                             if let Err(e) = db.update_project(
                                 project.id,
                                 project_form.name.trim(),
@@ -689,7 +691,7 @@ pub fn draw_dialog(
 
         DialogState::AddActivity(project_id) => {
             activity_form.project_id = Some(project_id);
-            
+
             egui::Window::new("New Activity")
                 .collapsible(false)
                 .resizable(false)
@@ -731,7 +733,10 @@ pub fn draw_dialog(
                         }
 
                         let can_save = activity_form.is_valid();
-                        if ui.add_enabled(can_save, egui::Button::new("Create")).clicked() {
+                        if ui
+                            .add_enabled(can_save, egui::Button::new("Create"))
+                            .clicked()
+                        {
                             if let Some(pid) = activity_form.project_id {
                                 if let Err(e) =
                                     db.create_activity_type(pid, activity_form.name.trim())
@@ -767,7 +772,10 @@ pub fn draw_dialog(
                         }
 
                         let can_save = !activity_form.name.trim().is_empty();
-                        if ui.add_enabled(can_save, egui::Button::new("Save")).clicked() {
+                        if ui
+                            .add_enabled(can_save, egui::Button::new("Save"))
+                            .clicked()
+                        {
                             if let Err(e) =
                                 db.update_activity_type(activity.id, activity_form.name.trim())
                             {
@@ -806,7 +814,10 @@ pub fn draw_dialog(
                         }
 
                         let can_save = entry_form.get_minutes().is_some();
-                        if ui.add_enabled(can_save, egui::Button::new("Save")).clicked() {
+                        if ui
+                            .add_enabled(can_save, egui::Button::new("Save"))
+                            .clicked()
+                        {
                             if let Some(minutes) = entry_form.get_minutes() {
                                 if let Err(e) =
                                     db.update_time_entry(entry.id, minutes, &entry_form.comment)

@@ -75,6 +75,41 @@ To build on Linux for Windows 11:
 
 The Windows executable will be at `target/x86_64-pc-windows-gnu/release/chronos-log.exe`
 
+## Deploying to Windows 11
+
+After cross-compiling from CachyOS/Linux, you can deploy the application to Windows 11:
+
+1. **Copy the executable** from `target/x86_64-pc-windows-gnu/release/chronos-log.exe` to your Windows machine
+
+2. **No additional dependencies needed** - The executable is self-contained with:
+   - Bundled SQLite (no separate installation required)
+   - All GUI libraries statically linked
+   - MinGW runtime included
+
+3. **First run on Windows**:
+   - Double-click `chronos-log.exe` to launch
+   - The application will automatically create its data directory at:
+     ```
+     %LOCALAPPDATA%\chronos-log\
+     ```
+   - Database file will be at: `%LOCALAPPDATA%\chronos-log\chronos_log.db`
+
+4. **Optional - Create a shortcut**:
+   - Right-click `chronos-log.exe` → "Create shortcut"
+   - Move the shortcut to your Desktop or Start Menu folder
+   - Optionally add a custom icon
+
+5. **Optional - Add to Windows startup** (to launch on login):
+   - Press `Win+R`, type `shell:startup`, press Enter
+   - Copy a shortcut to `chronos-log.exe` into this folder
+
+### Windows-Specific Notes
+
+- **No console window** - In release builds, the application runs without showing a console window (configured with `windows_subsystem = "windows"` in `main.rs`)
+- **Data persistence** - All data is stored locally in the Windows user's AppData folder
+- **No internet required** - The application works completely offline
+- **Antivirus** - If Windows Defender or other antivirus software flags the executable, you may need to add an exception (common with MinGW-compiled executables)
+
 ## Usage
 
 ### Time Tracking Tab
