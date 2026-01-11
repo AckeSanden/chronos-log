@@ -167,16 +167,7 @@ impl WorkTrackerApp {
                 self.activity_form = ActivityForm::from_activity(activity);
             }
             DialogState::EditTimeEntry(entry) => {
-                println!(
-                    "DEBUG: Preparing EditTimeEntry form - time: {}, comment: {}",
-                    crate::database::format_minutes_to_time(entry.minutes),
-                    entry.comment
-                );
                 self.entry_form = TimeEntryForm::from_entry(entry);
-                println!(
-                    "DEBUG: Form prepared - time_str: {}, comment: {}",
-                    self.entry_form.time_str, self.entry_form.comment
-                );
             }
             DialogState::AddProject => {
                 self.project_form.clear();

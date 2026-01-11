@@ -119,13 +119,22 @@ pub fn draw_time_tracking_view(
             }
         });
 
+        let mut submit_entry = false;
+
         ui.horizontal(|ui| {
-            ui.label("Comment:");
-            ui.add(
+            ui.label("Comment *:");
+            let comment_response = ui.add(
                 egui::TextEdit::singleline(&mut entry_form.comment)
                     .desired_width(400.0)
-                    .hint_text("What did you do?"),
+                    .hint_text("What did you do? (required)"),
             );
+
+            // Check if Enter was pressed in the comment field
+            if comment_response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if entry_form.is_valid() {
+                    submit_entry = true;
+                }
+            }
         });
 
         ui.horizontal(|ui| {
@@ -134,28 +143,33 @@ pub fn draw_time_tracking_view(
                 .add_enabled(can_add, egui::Button::new("➕ Add Entry"))
                 .clicked()
             {
-                if let (Some(activity_id), Some(minutes)) =
-                    (entry_form.activity_type_id, entry_form.get_minutes())
-                {
-                    if let Err(e) = db.create_time_entry(
-                        activity_id,
-                        date_state.selected_date,
-                        minutes,
-                        &entry_form.comment,
-                    ) {
-                        eprintln!("Error creating entry: {}", e);
-                    } else {
-                        entry_form.comment.clear();
-                        entry_form.time_str = "00:30".to_string();
-                        cache.mark_dirty();
-                    }
-                }
+                submit_entry = true;
             }
 
             if ui.button("Clear").clicked() {
                 entry_form.clear();
             }
         });
+
+        // Handle submission (either from button or Enter key)
+        if submit_entry {
+            if let (Some(activity_id), Some(minutes)) =
+                (entry_form.activity_type_id, entry_form.get_minutes())
+            {
+                if let Err(e) = db.create_time_entry(
+                    activity_id,
+                    date_state.selected_date,
+                    minutes,
+                    &entry_form.comment,
+                ) {
+                    eprintln!("Error creating entry: {}", e);
+                } else {
+                    entry_form.comment.clear();
+                    entry_form.time_str = "00:30".to_string();
+                    cache.mark_dirty();
+                }
+            }
+        }
     });
 
     ui.add_space(10.0);
@@ -817,10 +831,11 @@ pub fn draw_dialog(
                     });
 
                     ui.horizontal(|ui| {
-                        ui.label("Comment:");
+                        ui.label("Comment *:");
                         ui.add(
                             egui::TextEdit::singleline(&mut entry_form.comment)
-                                .desired_width(300.0),
+                                .desired_width(300.0)
+                                .hint_text("(required)"),
                         );
                     });
 
@@ -831,7 +846,7 @@ pub fn draw_dialog(
                             entry_form.clear();
                         }
 
-                        let can_save = entry_form.get_minutes().is_some();
+                        let can_save = entry_form.is_valid();
                         if ui
                             .add_enabled(can_save, egui::Button::new("Save"))
                             .clicked()

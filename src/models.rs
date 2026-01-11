@@ -144,6 +144,7 @@ impl TimeEntryForm {
     pub fn is_valid(&self) -> bool {
         self.activity_type_id.is_some()
             && crate::database::parse_time_to_minutes(&self.time_str).is_ok()
+            && !self.comment.trim().is_empty()
     }
 
     pub fn get_minutes(&self) -> Option<i32> {
