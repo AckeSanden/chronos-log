@@ -795,15 +795,33 @@ pub fn draw_dialog(
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
+                .default_width(400.0)
                 .show(ctx, |ui| {
+                    // Show which activity this entry is for
+                    if let Some(activity) = cache.get_activity_by_id(entry.activity_type_id) {
+                        if let Some(project) = cache.get_project_by_id(activity.project_id) {
+                            ui.label(
+                                RichText::new(format!("{} - {}", project.name, activity.name))
+                                    .strong(),
+                            );
+                            ui.add_space(5.0);
+                        }
+                    }
+
                     ui.horizontal(|ui| {
                         ui.label("Time (HH:MM):");
-                        ui.text_edit_singleline(&mut entry_form.time_str);
+                        ui.add(
+                            egui::TextEdit::singleline(&mut entry_form.time_str)
+                                .desired_width(80.0),
+                        );
                     });
 
                     ui.horizontal(|ui| {
                         ui.label("Comment:");
-                        ui.text_edit_singleline(&mut entry_form.comment);
+                        ui.add(
+                            egui::TextEdit::singleline(&mut entry_form.comment)
+                                .desired_width(300.0),
+                        );
                     });
 
                     ui.add_space(10.0);

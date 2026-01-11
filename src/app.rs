@@ -12,15 +12,16 @@ pub struct WorkTrackerApp {
     db: Database,
     current_view: AppView,
     dialog_state: DialogState,
+    previous_dialog_state: Option<DialogState>,
     date_state: DateState,
     cache: CachedData,
     filter_state: FilterState,
-    
+
     // Form data
     project_form: ProjectForm,
     activity_form: ActivityForm,
     entry_form: TimeEntryForm,
-    
+
     // Messages
     messages: Vec<UserMessage>,
 }
@@ -33,7 +34,7 @@ impl WorkTrackerApp {
 
         // Determine database path
         let db_path = get_database_path();
-        
+
         // Create database connection
         let db = match Database::new(&db_path) {
             Ok(db) => {
@@ -50,6 +51,7 @@ impl WorkTrackerApp {
             db,
             current_view: AppView::default(),
             dialog_state: DialogState::default(),
+            previous_dialog_state: None,
             date_state: DateState::default(),
             cache: CachedData::new(),
             filter_state: FilterState::new(),
@@ -91,25 +93,39 @@ impl WorkTrackerApp {
     /// Create example data for first run
     fn create_example_data(&mut self) {
         // Create example project
-        if let Ok(project_id) = self.db.create_project(
-            "33 - IT-Support",
-            "IT Support activities across locations",
-        ) {
+        if let Ok(project_id) = self
+            .db
+            .create_project("33 - IT-Support", "IT Support activities across locations")
+        {
             // Create example activities
-            let _ = self.db.create_activity_type(project_id, "IT-Support - Trollhättan");
-            let _ = self.db.create_activity_type(project_id, "IT-Support - Göteborg");
-            let _ = self.db.create_activity_type(project_id, "IT-Support - Västerås");
-            let _ = self.db.create_activity_type(project_id, "IT-Support - Östersund");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "IT-Support - Trollhättan");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "IT-Support - Göteborg");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "IT-Support - Västerås");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "IT-Support - Östersund");
         }
 
         // Create another example project
-        if let Ok(project_id) = self.db.create_project(
-            "40 - Development",
-            "Software development tasks",
-        ) {
-            let _ = self.db.create_activity_type(project_id, "Development - Feature work");
-            let _ = self.db.create_activity_type(project_id, "Development - Bug fixes");
-            let _ = self.db.create_activity_type(project_id, "Development - Code review");
+        if let Ok(project_id) = self
+            .db
+            .create_project("40 - Development", "Software development tasks")
+        {
+            let _ = self
+                .db
+                .create_activity_type(project_id, "Development - Feature work");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "Development - Bug fixes");
+            let _ = self
+                .db
+                .create_activity_type(project_id, "Development - Code review");
         }
 
         self.add_message(UserMessage::info("Created example projects and activities"));
@@ -125,8 +141,24 @@ impl WorkTrackerApp {
         self.messages.retain(|m| !m.is_expired());
     }
 
-    /// Prepare form data when opening dialogs
-    fn prepare_dialog_forms(&mut self) {
+    /// Prepare form data when opening dialogs (only on dialog state change)
+    fn prepare_dialog_forms_if_changed(&mut self) {
+        // Check if dialog state has changed
+        let dialog_changed = match (&self.previous_dialog_state, &self.dialog_state) {
+            (None, DialogState::None) => false,
+            (Some(DialogState::None), DialogState::None) => false,
+            (Some(prev), current) => {
+                // Compare discriminants to see if dialog type changed
+                std::mem::discriminant(prev) != std::mem::discriminant(current)
+            }
+            _ => true, // Changed from None to something, or first time
+        };
+
+        if !dialog_changed {
+            return;
+        }
+
+        // Prepare forms based on new dialog state
         match &self.dialog_state {
             DialogState::EditProject(project) => {
                 self.project_form = ProjectForm::from_project(project);
@@ -135,7 +167,16 @@ impl WorkTrackerApp {
                 self.activity_form = ActivityForm::from_activity(activity);
             }
             DialogState::EditTimeEntry(entry) => {
+                println!(
+                    "DEBUG: Preparing EditTimeEntry form - time: {}, comment: {}",
+                    crate::database::format_minutes_to_time(entry.minutes),
+                    entry.comment
+                );
                 self.entry_form = TimeEntryForm::from_entry(entry);
+                println!(
+                    "DEBUG: Form prepared - time_str: {}, comment: {}",
+                    self.entry_form.time_str, self.entry_form.comment
+                );
             }
             DialogState::AddProject => {
                 self.project_form.clear();
@@ -146,6 +187,9 @@ impl WorkTrackerApp {
             }
             _ => {}
         }
+
+        // Update previous state
+        self.previous_dialog_state = Some(self.dialog_state.clone());
     }
 }
 
@@ -158,6 +202,9 @@ impl eframe::App for WorkTrackerApp {
 
         // Clean up old messages
         self.cleanup_messages();
+
+        // Prepare form data when dialog state changes (before drawing)
+        self.prepare_dialog_forms_if_changed();
 
         // Draw main panel
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -218,9 +265,6 @@ impl eframe::App for WorkTrackerApp {
             }
         });
 
-        // Prepare form data when dialog state changes
-        self.prepare_dialog_forms();
-
         // Draw dialogs
         ui::draw_dialog(
             ctx,
@@ -237,12 +281,24 @@ impl eframe::App for WorkTrackerApp {
 /// Configure egui fonts
 fn configure_fonts(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
-    
+
     // Increase default font size slightly
-    style.text_styles.get_mut(&egui::TextStyle::Body).unwrap().size = 14.0;
-    style.text_styles.get_mut(&egui::TextStyle::Button).unwrap().size = 14.0;
-    style.text_styles.get_mut(&egui::TextStyle::Heading).unwrap().size = 20.0;
-    
+    style
+        .text_styles
+        .get_mut(&egui::TextStyle::Body)
+        .unwrap()
+        .size = 14.0;
+    style
+        .text_styles
+        .get_mut(&egui::TextStyle::Button)
+        .unwrap()
+        .size = 14.0;
+    style
+        .text_styles
+        .get_mut(&egui::TextStyle::Heading)
+        .unwrap()
+        .size = 20.0;
+
     ctx.set_style(style);
 }
 
