@@ -71,7 +71,7 @@ impl ProjectForm {
     }
 
     pub fn is_valid(&self) -> bool {
-        !self.name.trim().is_empty()
+        !self.name.trim().is_empty() && !self.description.trim().is_empty()
     }
 }
 

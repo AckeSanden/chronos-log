@@ -625,12 +625,15 @@ pub fn draw_dialog(
                 .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Name:");
+                        ui.label("Name *:");
                         ui.text_edit_singleline(&mut project_form.name);
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Description:");
-                        ui.text_edit_singleline(&mut project_form.description);
+                        ui.label("Description *:");
+                        ui.add(
+                            egui::TextEdit::singleline(&mut project_form.description)
+                                .hint_text("(required)"),
+                        );
                     });
 
                     ui.add_space(10.0);
@@ -667,12 +670,15 @@ pub fn draw_dialog(
                 .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Name:");
+                        ui.label("Name *:");
                         ui.text_edit_singleline(&mut project_form.name);
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Description:");
-                        ui.text_edit_singleline(&mut project_form.description);
+                        ui.label("Description *:");
+                        ui.add(
+                            egui::TextEdit::singleline(&mut project_form.description)
+                                .hint_text("(required)"),
+                        );
                     });
 
                     ui.add_space(10.0);
