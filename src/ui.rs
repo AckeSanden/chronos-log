@@ -476,8 +476,13 @@ pub fn draw_activities_view(
                 .add_enabled(has_projects, egui::Button::new("➕ New Activity"))
                 .clicked()
             {
-                if let Some(project) = cache.projects.first() {
-                    *dialog = DialogState::AddActivity(project.id);
+                // Use filtered project if set, otherwise use first active project
+                let default_project_id = filter
+                    .selected_project_id
+                    .or_else(|| cache.projects.iter().find(|p| p.is_active).map(|p| p.id));
+
+                if let Some(project_id) = default_project_id {
+                    *dialog = DialogState::AddActivity(project_id);
                 }
             }
         });
@@ -709,9 +714,7 @@ pub fn draw_dialog(
                 });
         }
 
-        DialogState::AddActivity(project_id) => {
-            activity_form.project_id = Some(project_id);
-
+        DialogState::AddActivity(_project_id) => {
             egui::Window::new("New Activity")
                 .collapsible(false)
                 .resizable(false)
