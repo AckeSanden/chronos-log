@@ -158,6 +158,8 @@ pub struct CachedData {
     pub projects: Vec<Project>,
     pub all_activities: Vec<ActivityType>,
     pub current_date_entries: Vec<TimeEntry>,
+    pub daily_summary: Vec<crate::database::ActivitySummary>,
+    pub summary_date: Option<chrono::NaiveDate>,
     pub needs_refresh: bool,
 }
 

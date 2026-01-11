@@ -264,11 +264,15 @@ pub fn draw_daily_summary_view(
     ui.label("Total time per activity (for entering into time management system):");
     ui.add_space(10.0);
 
-    let summaries = db
-        .get_daily_summary(date_state.selected_date)
-        .unwrap_or_default();
+    // Check if we need to refresh summary for date change
+    if cache.summary_date != Some(date_state.selected_date) {
+        cache.daily_summary = db
+            .get_daily_summary(date_state.selected_date)
+            .unwrap_or_default();
+        cache.summary_date = Some(date_state.selected_date);
+    }
 
-    if summaries.is_empty() {
+    if cache.daily_summary.is_empty() {
         ui.label("No entries for this date.");
         return;
     }
@@ -276,7 +280,7 @@ pub fn draw_daily_summary_view(
     // Group by project
     let mut by_project: std::collections::HashMap<String, Vec<&ActivitySummary>> =
         std::collections::HashMap::new();
-    for summary in &summaries {
+    for summary in &cache.daily_summary {
         by_project
             .entry(summary.project_name.clone())
             .or_default()
@@ -286,11 +290,19 @@ pub fn draw_daily_summary_view(
     let mut total_day_minutes = 0;
 
     egui::ScrollArea::vertical().show(ui, |ui| {
-        for (project_name, activities) in by_project.iter() {
+        // Sort projects by name for consistent ordering
+        let mut sorted_projects: Vec<_> = by_project.iter().collect();
+        sorted_projects.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (project_name, activities) in sorted_projects {
             ui.group(|ui| {
                 ui.heading(project_name);
 
-                for summary in activities {
+                // Sort activities by name for consistent ordering
+                let mut sorted_activities = activities.clone();
+                sorted_activities.sort_by(|a, b| a.activity_name.cmp(&b.activity_name));
+
+                for summary in sorted_activities {
                     total_day_minutes += summary.total_minutes;
 
                     ui.horizontal(|ui| {

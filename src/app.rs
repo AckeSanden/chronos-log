@@ -87,6 +87,13 @@ impl WorkTrackerApp {
             .get_time_entries_for_date(self.date_state.selected_date)
             .unwrap_or_default();
 
+        // Load daily summary for current date
+        self.cache.daily_summary = self
+            .db
+            .get_daily_summary(self.date_state.selected_date)
+            .unwrap_or_default();
+        self.cache.summary_date = Some(self.date_state.selected_date);
+
         self.cache.needs_refresh = false;
     }
 
