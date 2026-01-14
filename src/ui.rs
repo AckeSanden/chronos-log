@@ -1,7 +1,9 @@
 // src/ui.rs
 // GUI components and rendering functions
 
-use crate::database::{format_minutes_to_time, ActivitySummary, Database};
+use crate::database::{
+    format_minutes_to_decimal, format_minutes_to_time, ActivitySummary, Database,
+};
 use crate::models::*;
 use egui::{Align, Color32, Layout, RichText, Ui, Vec2};
 
@@ -190,11 +192,21 @@ pub fn draw_time_tracking_view(
                     let project = activity.and_then(|a| cache.get_project_by_id(a.project_id));
 
                     ui.horizontal(|ui| {
-                        // Time
+                        // Time in HH:MM format
                         ui.label(
                             RichText::new(format_minutes_to_time(entry.minutes))
                                 .monospace()
                                 .strong(),
+                        );
+
+                        // Time in decimal format
+                        ui.label(
+                            RichText::new(format!(
+                                "({}h)",
+                                format_minutes_to_decimal(entry.minutes)
+                            ))
+                            .monospace()
+                            .color(Color32::from_rgb(100, 100, 100)),
                         );
 
                         // Activity and project
@@ -251,6 +263,12 @@ pub fn draw_time_tracking_view(
             RichText::new(format_minutes_to_time(total_minutes))
                 .size(18.0)
                 .strong()
+                .color(color),
+        );
+
+        ui.label(
+            RichText::new(format!("({}h)", format_minutes_to_decimal(total_minutes)))
+                .size(16.0)
                 .color(color),
         );
 
@@ -336,17 +354,27 @@ pub fn draw_daily_summary_view(
                         // Activity name
                         ui.label(RichText::new(&summary.activity_name).strong());
 
-                        // Total time
+                        // Total time in HH:MM format
                         ui.label(
                             RichText::new(format_minutes_to_time(summary.total_minutes))
                                 .monospace()
                                 .color(Color32::from_rgb(0, 100, 200)),
                         );
 
-                        // Copy button
+                        // Total time in decimal format
+                        ui.label(
+                            RichText::new(format!(
+                                "({}h)",
+                                format_minutes_to_decimal(summary.total_minutes)
+                            ))
+                            .monospace()
+                            .color(Color32::from_rgb(100, 100, 100)),
+                        );
+
+                        // Copy button for decimal format
                         if ui.small_button("📋 Copy").clicked() {
                             ui.output_mut(|o| {
-                                o.copied_text = format_minutes_to_time(summary.total_minutes);
+                                o.copied_text = format_minutes_to_decimal(summary.total_minutes);
                             });
                         }
                     });
@@ -396,6 +424,16 @@ pub fn draw_daily_summary_view(
                     .strong()
                     .size(18.0)
                     .color(color),
+            );
+
+            ui.label(
+                RichText::new(format!(
+                    "({}h)",
+                    format_minutes_to_decimal(total_day_minutes)
+                ))
+                .strong()
+                .size(16.0)
+                .color(color),
             );
 
             // Show warning icon and message if over 8 hours

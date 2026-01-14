@@ -213,10 +213,9 @@ impl Database {
 
     /// Delete a project permanently
     pub fn delete_project(&self, id: i64) -> DbResult<()> {
-        let rows = self.conn.execute(
-            "DELETE FROM projects WHERE id = ?1",
-            params![id],
-        )?;
+        let rows = self
+            .conn
+            .execute("DELETE FROM projects WHERE id = ?1", params![id])?;
         if rows == 0 {
             return Err(DatabaseError::ProjectNotFound(id));
         }
@@ -241,10 +240,10 @@ impl Database {
         only_active: bool,
     ) -> DbResult<Vec<ActivityType>> {
         let sql = if only_active {
-            "SELECT id, project_id, name, is_active FROM activity_types 
+            "SELECT id, project_id, name, is_active FROM activity_types
              WHERE project_id = ?1 AND is_active = 1 ORDER BY name"
         } else {
-            "SELECT id, project_id, name, is_active FROM activity_types 
+            "SELECT id, project_id, name, is_active FROM activity_types
              WHERE project_id = ?1 ORDER BY name"
         };
 
@@ -265,7 +264,7 @@ impl Database {
     /// Get all activity types (optionally only active ones)
     pub fn get_all_activity_types(&self, only_active: bool) -> DbResult<Vec<ActivityType>> {
         let sql = if only_active {
-            "SELECT id, project_id, name, is_active FROM activity_types 
+            "SELECT id, project_id, name, is_active FROM activity_types
              WHERE is_active = 1 ORDER BY name"
         } else {
             "SELECT id, project_id, name, is_active FROM activity_types ORDER BY name"
@@ -341,10 +340,9 @@ impl Database {
 
     /// Delete an activity type permanently
     pub fn delete_activity_type(&self, id: i64) -> DbResult<()> {
-        let rows = self.conn.execute(
-            "DELETE FROM activity_types WHERE id = ?1",
-            params![id],
-        )?;
+        let rows = self
+            .conn
+            .execute("DELETE FROM activity_types WHERE id = ?1", params![id])?;
         if rows == 0 {
             return Err(DatabaseError::ActivityNotFound(id));
         }
@@ -362,7 +360,7 @@ impl Database {
         comment: &str,
     ) -> DbResult<i64> {
         self.conn.execute(
-            "INSERT INTO time_entries (activity_type_id, date, minutes, comment) 
+            "INSERT INTO time_entries (activity_type_id, date, minutes, comment)
              VALUES (?1, ?2, ?3, ?4)",
             params![activity_type_id, date.to_string(), minutes, comment],
         )?;
@@ -372,7 +370,7 @@ impl Database {
     /// Get all time entries for a specific date
     pub fn get_time_entries_for_date(&self, date: NaiveDate) -> DbResult<Vec<TimeEntry>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, activity_type_id, date, minutes, comment 
+            "SELECT id, activity_type_id, date, minutes, comment
              FROM time_entries WHERE date = ?1 ORDER BY id",
         )?;
         let entries = stmt
@@ -398,21 +396,24 @@ impl Database {
         end_date: NaiveDate,
     ) -> DbResult<Vec<TimeEntry>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, activity_type_id, date, minutes, comment 
+            "SELECT id, activity_type_id, date, minutes, comment
              FROM time_entries WHERE date >= ?1 AND date <= ?2 ORDER BY date, id",
         )?;
         let entries = stmt
-            .query_map(params![start_date.to_string(), end_date.to_string()], |row| {
-                let date_str: String = row.get(2)?;
-                Ok(TimeEntry {
-                    id: row.get(0)?,
-                    activity_type_id: row.get(1)?,
-                    date: NaiveDate::parse_from_str(&date_str, "%Y-%m-%d")
-                        .unwrap_or_else(|_| NaiveDate::from_ymd_opt(2000, 1, 1).unwrap()),
-                    minutes: row.get(3)?,
-                    comment: row.get(4)?,
-                })
-            })?
+            .query_map(
+                params![start_date.to_string(), end_date.to_string()],
+                |row| {
+                    let date_str: String = row.get(2)?;
+                    Ok(TimeEntry {
+                        id: row.get(0)?,
+                        activity_type_id: row.get(1)?,
+                        date: NaiveDate::parse_from_str(&date_str, "%Y-%m-%d")
+                            .unwrap_or_else(|_| NaiveDate::from_ymd_opt(2000, 1, 1).unwrap()),
+                        minutes: row.get(3)?,
+                        comment: row.get(4)?,
+                    })
+                },
+            )?
             .collect::<Result<Vec<_>, _>>()?;
         Ok(entries)
     }
@@ -428,10 +429,8 @@ impl Database {
 
     /// Delete a time entry
     pub fn delete_time_entry(&self, id: i64) -> DbResult<()> {
-        self.conn.execute(
-            "DELETE FROM time_entries WHERE id = ?1",
-            params![id],
-        )?;
+        self.conn
+            .execute("DELETE FROM time_entries WHERE id = ?1", params![id])?;
         Ok(())
     }
 
@@ -442,7 +441,7 @@ impl Database {
         // First get all entries for the date with activity and project info
         let mut stmt = self.conn.prepare(
             r#"
-            SELECT 
+            SELECT
                 at.id as activity_type_id,
                 at.name as activity_name,
                 p.name as project_name,
@@ -525,8 +524,12 @@ pub fn parse_time_to_minutes(time_str: &str) -> Result<i32, DatabaseError> {
         return Err(DatabaseError::InvalidTimeFormat);
     }
 
-    let hours: i32 = parts[0].parse().map_err(|_| DatabaseError::InvalidTimeFormat)?;
-    let minutes: i32 = parts[1].parse().map_err(|_| DatabaseError::InvalidTimeFormat)?;
+    let hours: i32 = parts[0]
+        .parse()
+        .map_err(|_| DatabaseError::InvalidTimeFormat)?;
+    let minutes: i32 = parts[1]
+        .parse()
+        .map_err(|_| DatabaseError::InvalidTimeFormat)?;
 
     if hours < 0 || minutes < 0 || minutes >= 60 {
         return Err(DatabaseError::InvalidTimeFormat);
@@ -540,6 +543,13 @@ pub fn format_minutes_to_time(total_minutes: i32) -> String {
     let hours = total_minutes / 60;
     let minutes = total_minutes % 60;
     format!("{:02}:{:02}", hours, minutes)
+}
+
+/// Format minutes to decimal hours with Swedish comma separator (e.g., "1,5" for 90 minutes)
+pub fn format_minutes_to_decimal(total_minutes: i32) -> String {
+    let hours = total_minutes as f64 / 60.0;
+    // Format with 2 decimal places and replace . with ,
+    format!("{:.2}", hours).replace('.', ",")
 }
 
 #[cfg(test)]
@@ -562,6 +572,17 @@ mod tests {
     }
 
     #[test]
+    fn test_format_minutes_to_decimal() {
+        assert_eq!(format_minutes_to_decimal(30), "0,50");
+        assert_eq!(format_minutes_to_decimal(60), "1,00");
+        assert_eq!(format_minutes_to_decimal(90), "1,50");
+        assert_eq!(format_minutes_to_decimal(150), "2,50");
+        assert_eq!(format_minutes_to_decimal(480), "8,00");
+        assert_eq!(format_minutes_to_decimal(15), "0,25");
+        assert_eq!(format_minutes_to_decimal(45), "0,75");
+    }
+
+    #[test]
     fn test_database_operations() {
         let db = Database::new_in_memory().unwrap();
 
@@ -570,7 +591,9 @@ mod tests {
         assert!(project_id > 0);
 
         // Create activity type
-        let activity_id = db.create_activity_type(project_id, "Test Activity").unwrap();
+        let activity_id = db
+            .create_activity_type(project_id, "Test Activity")
+            .unwrap();
         assert!(activity_id > 0);
 
         // Create time entry
