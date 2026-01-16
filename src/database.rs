@@ -43,6 +43,7 @@ pub struct ActivityType {
 pub struct TimeEntry {
     pub id: i64,
     pub activity_type_id: i64,
+    #[allow(dead_code)]
     pub date: NaiveDate,
     pub minutes: i32,
     pub comment: String,
@@ -158,6 +159,7 @@ impl Database {
     }
 
     /// Get a single project by ID
+    #[allow(dead_code)]
     pub fn get_project(&self, id: i64) -> DbResult<Project> {
         self.conn
             .query_row(
@@ -234,6 +236,7 @@ impl Database {
     }
 
     /// Get all activity types for a project
+    #[allow(dead_code)]
     pub fn get_activity_types_for_project(
         &self,
         project_id: i64,
@@ -285,6 +288,7 @@ impl Database {
     }
 
     /// Get a single activity type by ID
+    #[allow(dead_code)]
     pub fn get_activity_type(&self, id: i64) -> DbResult<ActivityType> {
         self.conn
             .query_row(
@@ -390,6 +394,7 @@ impl Database {
     }
 
     /// Get time entries for a date range
+    #[allow(dead_code)]
     pub fn get_time_entries_for_range(
         &self,
         start_date: NaiveDate,
@@ -505,6 +510,7 @@ impl Database {
     }
 
     /// Get total time for a specific date
+    #[allow(dead_code)]
     pub fn get_total_time_for_date(&self, date: NaiveDate) -> DbResult<i32> {
         let total: i32 = self.conn.query_row(
             "SELECT COALESCE(SUM(minutes), 0) FROM time_entries WHERE date = ?1",

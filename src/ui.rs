@@ -1037,11 +1037,6 @@ pub fn draw_dialog(
                     });
                 });
         }
-
-        DialogState::AddTimeEntry => {
-            // Not used directly, time entry is added via the main form
-            should_close = true;
-        }
     }
 
     if should_close {

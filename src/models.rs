@@ -27,7 +27,6 @@ pub enum DialogState {
     EditProject(Project),
     AddActivity(i64), // project_id
     EditActivity(ActivityType),
-    AddTimeEntry,
     EditTimeEntry(TimeEntry),
     ConfirmDelete(DeleteTarget),
 }
@@ -208,14 +207,6 @@ impl UserMessage {
         }
     }
 
-    pub fn error(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            is_error: true,
-            timestamp: std::time::Instant::now(),
-        }
-    }
-
     pub fn is_expired(&self) -> bool {
         self.timestamp.elapsed().as_secs() > 5
     }
@@ -226,7 +217,6 @@ impl UserMessage {
 pub struct FilterState {
     pub show_inactive: bool,
     pub selected_project_id: Option<i64>,
-    pub search_text: String,
 }
 
 impl FilterState {
@@ -250,10 +240,6 @@ impl Default for DateState {
 }
 
 impl DateState {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn today(&mut self) {
         self.selected_date = chrono::Local::now().date_naive();
     }
