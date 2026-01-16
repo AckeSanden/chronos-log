@@ -252,11 +252,11 @@ pub fn draw_time_tracking_view(
         ui.label(RichText::new("Total:").strong());
 
         let (color, show_warning) = if total_minutes < eight_hours {
-            (Color32::from_rgb(255, 0, 0), false) // Red - under 8 hours
+            (Color32::from_rgb(255, 200, 0), false) // Yellow - under 8 hours
         } else if total_minutes == eight_hours {
             (Color32::from_rgb(0, 150, 0), false) // Green - exactly 8 hours
         } else {
-            (Color32::from_rgb(255, 140, 0), true) // Orange - over 8 hours with warning
+            (Color32::from_rgb(255, 0, 0), true) // Red - over 8 hours with warning
         };
 
         ui.label(
@@ -277,11 +277,11 @@ pub fn draw_time_tracking_view(
             ui.label(
                 RichText::new("⚠")
                     .size(18.0)
-                    .color(Color32::from_rgb(255, 140, 0)),
+                    .color(Color32::from_rgb(255, 0, 0)),
             );
             ui.label(
                 RichText::new("Over 8 hours!")
-                    .color(Color32::from_rgb(255, 140, 0))
+                    .color(Color32::from_rgb(255, 0, 0))
                     .strong(),
             );
         }
@@ -412,11 +412,11 @@ pub fn draw_daily_summary_view(
             ui.label(RichText::new("TOTAL FOR DAY:").strong().size(16.0));
 
             let (color, show_warning) = if total_day_minutes < eight_hours {
-                (Color32::from_rgb(255, 0, 0), false) // Red - under 8 hours
+                (Color32::from_rgb(255, 200, 0), false) // Yellow - under 8 hours
             } else if total_day_minutes == eight_hours {
                 (Color32::from_rgb(0, 150, 0), false) // Green - exactly 8 hours
             } else {
-                (Color32::from_rgb(255, 140, 0), true) // Orange - over 8 hours with warning
+                (Color32::from_rgb(255, 0, 0), true) // Red - over 8 hours with warning
             };
 
             ui.label(
@@ -441,11 +441,11 @@ pub fn draw_daily_summary_view(
                 ui.label(
                     RichText::new("⚠")
                         .size(18.0)
-                        .color(Color32::from_rgb(255, 140, 0)),
+                        .color(Color32::from_rgb(255, 0, 0)),
                 );
                 ui.label(
                     RichText::new("Over 8 hours!")
-                        .color(Color32::from_rgb(255, 140, 0))
+                        .color(Color32::from_rgb(255, 0, 0))
                         .strong(),
                 );
             }
