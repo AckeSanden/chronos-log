@@ -16,6 +16,10 @@ pub enum DatabaseError {
     ActivityNotFound(i64),
     #[error("Invalid time format")]
     InvalidTimeFormat,
+    #[error("Activity has time entries and cannot be deleted")]
+    ActivityHasEntries,
+    #[error("Project has activities and cannot be deleted")]
+    ProjectHasActivities,
 }
 
 pub type DbResult<T> = Result<T, DatabaseError>;
@@ -213,8 +217,19 @@ impl Database {
         Ok(())
     }
 
-    /// Delete a project permanently
+    /// Delete a project permanently (only if no activities exist)
     pub fn delete_project(&self, id: i64) -> DbResult<()> {
+        // Check if project has any activities
+        let count: i32 = self.conn.query_row(
+            "SELECT COUNT(*) FROM activity_types WHERE project_id = ?1",
+            params![id],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            return Err(DatabaseError::ProjectHasActivities);
+        }
+
         let rows = self
             .conn
             .execute("DELETE FROM projects WHERE id = ?1", params![id])?;
@@ -342,8 +357,19 @@ impl Database {
         Ok(())
     }
 
-    /// Delete an activity type permanently
+    /// Delete an activity type permanently (only if no time entries exist)
     pub fn delete_activity_type(&self, id: i64) -> DbResult<()> {
+        // Check if activity has any time entries
+        let count: i32 = self.conn.query_row(
+            "SELECT COUNT(*) FROM time_entries WHERE activity_type_id = ?1",
+            params![id],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            return Err(DatabaseError::ActivityHasEntries);
+        }
+
         let rows = self
             .conn
             .execute("DELETE FROM activity_types WHERE id = ?1", params![id])?;

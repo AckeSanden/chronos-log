@@ -1027,14 +1027,32 @@ pub fn draw_dialog(
                                 DeleteTarget::TimeEntry(id) => db.delete_time_entry(*id),
                             };
 
-                            if let Err(e) = result {
-                                eprintln!("Error deleting: {}", e);
-                            } else {
-                                cache.mark_dirty();
+                            match result {
+                                Ok(()) => {
+                                    cache.mark_dirty();
+                                    should_close = true;
+                                }
+                                Err(e) => {
+                                    *dialog = DialogState::ErrorMessage(e.to_string());
+                                }
                             }
-                            should_close = true;
                         }
                     });
+                });
+        }
+
+        DialogState::ErrorMessage(message) => {
+            egui::Window::new("Error")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
+                .show(ctx, |ui| {
+                    ui.label(RichText::new(&message).color(Color32::RED));
+                    ui.add_space(10.0);
+
+                    if ui.button("OK").clicked() {
+                        should_close = true;
+                    }
                 });
         }
     }

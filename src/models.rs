@@ -29,6 +29,7 @@ pub enum DialogState {
     EditActivity(ActivityType),
     EditTimeEntry(TimeEntry),
     ConfirmDelete(DeleteTarget),
+    ErrorMessage(String),
 }
 
 impl Default for DialogState {
